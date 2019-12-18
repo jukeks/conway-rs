@@ -83,8 +83,8 @@ fn parse_size(size: &String) -> Option<(usize, usize)> {
     Some((w, h))
 }
 
-fn window_size(args: &clap::ArgMatches) -> (usize, usize) {
-    match args.value_of("size") {
+fn window_size(size: Option<&str>) -> (usize, usize) {
+    match size {
         Some(s) => match parse_size(&String::from(s)) {
                 Some((w, h)) => (w, h),
                 _ => (1024, 768),
@@ -94,7 +94,7 @@ fn window_size(args: &clap::ArgMatches) -> (usize, usize) {
 }
 
 fn render_window(args: &clap::ArgMatches) {
-    let (w, h) = window_size(args);
+    let (w, h) = window_size(args.value_of("size"));
 
     let mut world = World::new(w, h);
     world.fill();
@@ -136,14 +136,14 @@ fn render_window(args: &clap::ArgMatches) {
     }
 }
 
-fn terminal_size(args: &clap::ArgMatches) -> (usize, usize) {
+fn terminal_size(size: Option<&str>) -> (usize, usize) {
     let (w, h) = if let Some((w, h)) = term_size::dimensions() {
         (w, h)
     } else {
         (80, 24)
     };
 
-    match args.value_of("size") {
+    match size {
         Some(s) => match parse_size(&String::from(s)) {
                 Some((w, h)) => (w, h),
                 _ => (w, h),
@@ -155,7 +155,7 @@ fn terminal_size(args: &clap::ArgMatches) -> (usize, usize) {
 fn render_terminal(args: &clap::ArgMatches) {
     let timings = args.is_present("frametime");
 
-    let (w, h) = terminal_size(args);
+    let (w, h) = terminal_size(args.value_of("size"));
     let mut world = if timings {
         World::new(w, h-2)
     } else {
@@ -192,5 +192,16 @@ fn render_terminal(args: &clap::ArgMatches) {
         }
 
         next = next + interval;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_size() {
+        assert_eq!(parse_size(&String::from("1600x1200")), Some((1600, 1200)));
+        assert_eq!(parse_size(&String::from("1600")), None);
     }
 }
