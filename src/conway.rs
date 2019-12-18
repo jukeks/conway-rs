@@ -59,6 +59,9 @@ impl World {
                 if j < 0 || j > i_h-1 {
                     continue
                 }
+                if i == i_x && j == i_y {
+                    continue
+                }
 
                 if self.cell(i as usize, j as usize) {
                     count += 1;
@@ -127,6 +130,81 @@ impl World {
 
                 buff[j * self.w + i] = value
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_neighbors() {
+        let mut w = World::new(3, 3);
+        w.set_cell(0, 1, true);
+        w.set_cell(1, 1, true);
+        w.set_cell(1, 0, true);
+
+        assert_eq!(w.alive_neighbors(0, 0), 3);
+    }
+
+    #[test]
+    fn test_reproduction() {
+        let mut w = World::new(2, 2);
+        w.set_cell(0, 1, true);
+        w.set_cell(1, 1, true);
+        w.set_cell(1, 0, true);
+
+        w.update();
+
+        assert_eq!(w.alive_neighbors(0, 0), 3);
+
+        assert_eq!(w.cell(0, 0), true);
+        assert_eq!(w.cell(0, 1), true);
+        assert_eq!(w.cell(1, 0), true);
+        assert_eq!(w.cell(1, 1), true);
+    }
+
+    #[test]
+    fn test_underpopulation() {
+        let mut w = World::new(2, 2);
+        w.set_cell(0, 0, true);
+
+        w.update();
+
+        assert_eq!(w.cell(0, 0), false);
+    }
+
+    #[test]
+    fn test_overpopulation() {
+        let mut w = World::new(3, 3);
+        w.set_cell(0, 0, true);
+        w.set_cell(0, 1, true);
+        w.set_cell(0, 2, true);
+        w.set_cell(1, 0, true);
+        w.set_cell(1, 1, true);
+
+        w.update();
+
+        assert_eq!(w.cell(0, 1), false);
+        assert_eq!(w.cell(0, 0), true);
+    }
+
+    #[test]
+    fn test_stable() {
+        let mut w = World::new(3, 3);
+        w.set_cell(0, 0, true);
+        w.set_cell(0, 1, true);
+        w.set_cell(1, 0, true);
+        w.set_cell(1, 1, true);
+
+        for _ in 0..2 {
+            w.update();
+
+            assert_eq!(w.cell(0, 0), true);
+            assert_eq!(w.cell(0, 1), true);
+            assert_eq!(w.cell(1, 0), true);
+            assert_eq!(w.cell(1, 1), true);
         }
     }
 }
