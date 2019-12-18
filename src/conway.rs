@@ -3,8 +3,8 @@ use rand;
 pub struct World {
     w: usize,
     h: usize,
-    state: Vec<Vec<bool>>,
-    next_state: Vec<Vec<bool>>,
+    state: Vec<bool>,
+    next_state: Vec<bool>,
 }
 
 impl World {
@@ -12,17 +12,35 @@ impl World {
         Self {
             w: w,
             h: h,
-            state: vec![vec![false; w]; h],
-            next_state: vec![vec![false; w]; h],
+            state: vec![false; w * h],
+            next_state: vec![false; w * h],
         }
     }
 
     pub fn fill(&mut self) {
         for j in 0..self.h  {
             for i in 0..self.w {
-                self.state[j][i] = rand::random()
+                self.set_cell(i, j, rand::random())
             }
         }
+    }
+
+    fn index(&self, i: usize, j: usize) -> usize {
+        j * self.w + i
+    }
+
+    fn cell(&self, i: usize, j: usize) -> bool {
+        self.state[self.index(i, j)]
+    }
+
+    fn set_cell(&mut self, i: usize, j: usize, cell: bool) {
+        let idx = self.index(i, j);
+        self.state[idx] = cell
+    }
+
+    fn set_next_cell(&mut self, i: usize, j: usize, cell: bool) {
+        let idx = self.index(i, j);
+        self.next_state[idx] = cell
     }
 
     fn alive_neighbors(&self, x: usize, y: usize) -> u8 {
@@ -42,7 +60,7 @@ impl World {
                     continue
                 }
 
-                if self.state[j as usize][i as usize] {
+                if self.cell(i as usize, j as usize) {
                     count += 1;
                 }
             }
@@ -51,12 +69,42 @@ impl World {
         count
     }
 
+    pub fn update(&mut self) -> (bool) {
+        let mut changed = false;
+
+        for j in 0..self.h  {
+            for i in 0..self.w {
+                let was_alive = self.cell(i, j);
+                let alive_neighbors = self.alive_neighbors(i, j);
+                let alive: bool;
+
+                if was_alive {
+                    alive = match alive_neighbors {
+                        0 | 1 => false,
+                        2 | 3 => true,
+                        _ => false
+                    };
+                } else {
+                    alive = alive_neighbors == 3;
+                }
+
+                self.set_next_cell(i, j, alive);
+
+                changed |= was_alive ^ alive;
+            }
+        }
+
+        std::mem::swap(&mut self.next_state, &mut self.state);
+
+        changed
+    }
+
     pub fn as_string(&self) -> String {
         let mut text = String::from("");
 
         for j in 0..self.h  {
             for i in 0..self.w {
-                if self.state[j][i] {
+                if self.cell(i, j) {
                     text.push_str("+");
                 } else {
                     text.push_str(" ");
@@ -73,42 +121,12 @@ impl World {
         for j in 0..self.h  {
             for i in 0..self.w {
                 let mut value = 0;
-                if self.state[j][i] {
+                if self.cell(i, j) {
                     value = (255 << 16) + (255 << 8) + 255;
                 }
 
                 buff[j * self.w + i] = value
             }
         }
-    }
-
-    pub fn update(&mut self) -> (bool) {
-        let mut changed = false;
-
-        for j in 0..self.h  {
-            for i in 0..self.w {
-                let was_alive = self.state[j][i];
-                let alive_neighbors = self.alive_neighbors(i, j);
-                let alive: bool;
-
-                if was_alive {
-                    alive = match alive_neighbors {
-                        0 | 1 => false,
-                        2 | 3 => true,
-                        _ => false
-                    };
-                } else {
-                    alive = alive_neighbors == 3;
-                }
-
-                self.next_state[j][i] = alive;
-
-                changed |= was_alive ^ alive;
-            }
-        }
-
-        std::mem::swap(&mut self.next_state, &mut self.state);
-
-        changed
     }
 }
