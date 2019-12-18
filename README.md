@@ -14,5 +14,5 @@ FLAGS:
     -V, --version       Prints version information
 
 OPTIONS:
-        --size <size>    Simulation size
+        --size <size>    Simulation size as <width>x<height>
 ```

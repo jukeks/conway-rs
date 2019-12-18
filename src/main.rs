@@ -40,7 +40,7 @@ fn main() {
         .arg(Arg::with_name("size")
                  .long("size")
                  .takes_value(true)
-                 .help("Simulation size")
+                 .help("Simulation size as <width>x<height>")
                  .display_order(2))
         .arg(Arg::with_name("frametime")
                  .short("f")
