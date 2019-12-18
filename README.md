@@ -17,4 +17,4 @@ OPTIONS:
         --size <size>    Simulation size as <width>x<height>
 ```
 
-![](https://github.com/jukeks/conway-rs/workflows/Rust/badge.svg)
+![](https://github.com/jukeks/conway-rs/workflows/Rust/badge.svg) [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
