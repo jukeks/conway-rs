@@ -1,8 +1,12 @@
 mod conway;
 
-use std::{time, thread};
+use std::{time, thread, process};
+
 use term_size;
+use std::io::{self, Write};
+
 use minifb::{Key, Window, WindowOptions, Scale};
+
 use clap::{Arg, App};
 
 use conway::World;
@@ -157,9 +161,9 @@ fn render_terminal(args: &clap::ArgMatches) {
 
     let (w, h) = terminal_size(args.value_of("size"));
     let mut world = if timings {
-        World::new(w, h-2)
+        World::new(w, h-1)
     } else {
-       World::new(w, h-1)
+       World::new(w, h)
     };
 
     world.fill();
@@ -167,6 +171,21 @@ fn render_terminal(args: &clap::ArgMatches) {
     let interval = time::Duration::from_millis(80);
     let now = time::Instant::now();
     let mut next = now + interval;
+
+    // switch to alternate screen buffer (DECSET)
+    print!("{}[?1049h", 27 as char);
+    // hide cursor (DECTCEM)
+    print!("{}[?25l", 27 as char);
+
+    ctrlc::set_handler(move || {
+        // hide cursor (DECTCEM)
+        print!("{}[?25h", 27 as char);
+        // switch back to normal screen (DECRST)
+        print!("{}[?1049l", 27 as char);
+
+        process::exit(0x0100);
+    }).expect("Error setting Ctrl-C handler");
+    
 
     loop {
         let frame_start = time::Instant::now();
@@ -177,13 +196,13 @@ fn render_terminal(args: &clap::ArgMatches) {
             break
         }
 
-        print!("{}[2J", 27 as char);
         print!("{}", frame);
 
         let frame_end = time::Instant::now();
         if timings {
-            println!("{} ms",
+            print!("{} ms",
                 ((frame_end-frame_start).as_micros() as f64) / 1000.0);
+            io::stdout().flush().unwrap();
         }
 
         let now = time::Instant::now();
@@ -193,6 +212,11 @@ fn render_terminal(args: &clap::ArgMatches) {
 
         next = next + interval;
     }
+
+    // hide cursor (DECTCEM)
+    print!("{}[?25h", 27 as char);
+    // switch back to normal screen (DECRST)
+    print!("{}[?1049l", 27 as char);
 }
 
 #[cfg(test)]

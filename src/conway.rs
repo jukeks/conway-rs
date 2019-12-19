@@ -83,7 +83,6 @@ impl World {
 
                 if was_alive {
                     alive = match alive_neighbors {
-                        0 | 1 => false,
                         2 | 3 => true,
                         _ => false
                     };
